@@ -19,4 +19,4 @@ This is a simple recommending system which was built using 🔗[Kaggle](https://
 
 # 🔗 Link 
 
-whatowatchnext.streamlit.app/
+[whatowatchnext.streamlit.app/](whatowatchnext.streamlit.app/)
