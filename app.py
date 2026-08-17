@@ -1,7 +1,7 @@
 import gzip
 import os
 import pickle
-
+import time
 import pandas as pd  # noqa: F401  -- required at runtime to unpickle the DataFrame
 import requests
 import streamlit as st
@@ -163,16 +163,31 @@ df_import_list, Similarity = load_artifacts()
 
 # retry api request
 def make_request_with_retry(url, params=None, max_retries=3):
-    for _ in range(max_retries):
+    last_error = None
+    for attempt in range(max_retries):
         try:
             response = requests.get(url, params=params, timeout=(3.05, 10))
             response.raise_for_status()  # Raises a HTTPError if the status is 4xx, 5xx
             return response
-        except requests.exceptions.ConnectionError:
-            continue
-    raise requests.exceptions.ConnectionError(
-        f"Failed to connect to {url} after {max_retries} attempts"
-    )
+
+        except requests.exceptions.HTTPError as err:
+            status = err.response.status_code
+            # 4xx means the request itself is wrong - retrying cannot help.
+            # 429 is the exception: it means "slow down", so it IS retryable.
+            if 400 <= status < 500 and status != 429:
+                raise
+            last_error = err
+
+        except requests.exceptions.RequestException as err:
+            # timeouts, connection errors, 5xx - all worth another attempt
+            last_error = err
+
+        if attempt < max_retries - 1:
+            time.sleep(2 ** attempt)  # 1s, then 2s
+
+    raise requests.exceptions.RequestException(
+        f"Failed to reach {url} after {max_retries} attempts"
+    ) from last_error
 
 
 
@@ -203,12 +218,23 @@ TMDB_API_KEY = load_tmdb_api_key()
 
 
 # Poster fetching function
+
+# TMDB returns "poster_path": null for titles with no artwork. Concatenating
+# that onto a string raises TypeError and takes down the whole row of five,
+# so fall back to a placeholder instead.
+
+PLACEHOLDER_POSTER = "https://placehold.co/500x750?text=No+Poster"
+
+
 @st.cache_data(ttl=86400, show_spinner=False)
 def posterfetcher(web_movie_id):
     url = f'https://api.themoviedb.org/3/movie/{web_movie_id}'
     response = make_request_with_retry(url, params={'api_key': TMDB_API_KEY})
-    data = response.json()
-    return "https://image.tmdb.org/t/p/w500"+ data['poster_path']
+    path = response.json().get('poster_path')
+    if not path:
+        return PLACEHOLDER_POSTER
+    return "https://image.tmdb.org/t/p/w500" + path
+    
 
 
 
@@ -324,8 +350,12 @@ if st.button('Recommend'):#change st to col2 (otherway)
 
     if option_selected:
 
-        movie_name,poster = recommend(option_selected)# function call 
-
+        try:
+            with st.spinner('Fetching recommendations...'):
+                movie_name, poster = recommend(option_selected)
+        except requests.exceptions.RequestException:
+            st.error("Couldn't reach TMDB to load posters. Please try again in a moment.")
+            st.stop()
 
         col1, col2, col3, col4, col5 = st.columns(5)
 
