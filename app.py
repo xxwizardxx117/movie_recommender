@@ -1,12 +1,11 @@
-import streamlit as st
-from PIL import Image
+import gzip
 import os
 import pickle
-import gzip
-import pandas as pd
-import textwrap
+
+import pandas as pd  # noqa: F401  -- required at runtime to unpickle the DataFrame
 import requests
-from requests.exceptions import ConnectionError
+import streamlit as st
+from PIL import Image
 
 # Page configuration
 
@@ -116,40 +115,64 @@ st.markdown("""
 
 
 
-
-
-
-
-
 # File Imports and Renaming
 
-# new way
-with gzip.open('movie_list.pkl.gz', 'rb') as f:
-    df_import_list = pickle.load(f)
 
 
-# df_import_list = pickle.load(open('movie_list.pkl','rb'))
-#df_import_list = df_import_list['title']    this is a list and the funtion related to it is not working 
+# # both are old ways
+# with gzip.open('movie_list.pkl.gz', 'rb') as f:
+#     df_import_list = pickle.load(f)
 
-df_import_list = pd.DataFrame(df_import_list)
 
-# print(df_import_list)
+# # df_import_list = pickle.load(open('movie_list.pkl','rb'))
+# #df_import_list = df_import_list['title']    this is a list and the funtion related to it is not working 
 
-# Load 'Similarity' from a gzip compressed pickle file
-with gzip.open('similarity.pkl.gz', 'rb') as f:
-    Similarity = pickle.load(f)
-# Similarity = pickle.load(open('similarity.pkl','rb'))
+# df_import_list = pd.DataFrame(df_import_list)
+
+# # print(df_import_list)
+
+# # Load 'Similarity' from a gzip compressed pickle file
+# with gzip.open('similarity.pkl.gz', 'rb') as f:
+#     Similarity = pickle.load(f)
+# # Similarity = pickle.load(open('similarity.pkl','rb'))
+
+
+
+# way 3 
+
+# Streamlit re-executes this entire script on every widget interaction. Without
+# a cache, the 47 MB similarity matrix is un-gzipped and unpickled every single
+# time. @st.cache_resource loads it once per server process and hands back the
+# same object thereafter.
+#
+# Note: pandas stays imported above even though `pd` is no longer referenced
+# directly -- unpickling a DataFrame requires pandas to be importable, so the
+# dependency is real. Do not remove it from pyproject.toml/requirements.txt.
+
+@st.cache_resource
+def load_artifacts():
+    with gzip.open('movie_list.pkl.gz', 'rb') as f:
+        movies = pickle.load(f)
+    with gzip.open('similarity.pkl.gz', 'rb') as f:
+        similarity = pickle.load(f)
+    return movies, similarity
+
+
+df_import_list, Similarity = load_artifacts()
+
 
 # retry api request
-def make_request_with_retry(url, max_retries=10):
+def make_request_with_retry(url, params=None, max_retries=3):
     for _ in range(max_retries):
         try:
-            response = requests.get(url)
+            response = requests.get(url, params=params, timeout=(3.05, 10))
             response.raise_for_status()  # Raises a HTTPError if the status is 4xx, 5xx
             return response
-        except ConnectionError:
+        except requests.exceptions.ConnectionError:
             continue
-    raise ConnectionError(f"Failed to connect to {url} after {max_retries} attempts")
+    raise requests.exceptions.ConnectionError(
+        f"Failed to connect to {url} after {max_retries} attempts"
+    )
 
 
 
@@ -163,7 +186,7 @@ def load_tmdb_api_key():
 
     try:
         key = st.secrets['TMDB_API_KEY']
-    except Exception:
+    except (KeyError, FileNotFoundError):
         key = os.environ.get('TMDB_API_KEY', '')
 
     if not key:
@@ -180,13 +203,11 @@ TMDB_API_KEY = load_tmdb_api_key()
 
 
 # Poster fetching function
-
+@st.cache_data(ttl=86400, show_spinner=False)
 def posterfetcher(web_movie_id):
-    url = 'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(web_movie_id, TMDB_API_KEY)
-    response = make_request_with_retry(url)
-
+    url = f'https://api.themoviedb.org/3/movie/{web_movie_id}'
+    response = make_request_with_retry(url, params={'api_key': TMDB_API_KEY})
     data = response.json()
-
     return "https://image.tmdb.org/t/p/w500"+ data['poster_path']
 
 
@@ -203,7 +224,7 @@ def recommend(option_selected):
 
     currmovie_all_dist = Similarity[index_movie]
 
-    top_recommendation = sorted(list(enumerate(currmovie_all_dist)),reverse=True,key = lambda x:x[1])[1:6]
+    top_recommendation = sorted(enumerate(currmovie_all_dist),reverse=True,key = lambda x:x[1])[1:6]
 
     # print (top_recommendation)
 
@@ -353,7 +374,7 @@ if st.button('Recommend'):#change st to col2 (otherway)
 
 with st.sidebar:
 
-    styled_title = f"<h1 style='font-size: 30px; text-align: center; margin-top: 0;'>Watch Later</h1>"
+    styled_title = "<h1 style='font-size: 30px; text-align: center; margin-top: 0;'>Watch Later</h1>"
 
     st.markdown(styled_title, unsafe_allow_html=True)
 
