@@ -1,0 +1,28 @@
+# Normalise line endings in the repository (stored as LF, checked out natively).
+# Development happens on Windows while Streamlit Cloud builds on Linux, so this
+# keeps the stored blobs identical regardless of where a commit is made.
+* text=auto
+
+# --- Binary artifacts -------------------------------------------------------
+# Marked binary so git never attempts to diff or line-normalise them.
+# similarity.pkl.gz is ~39 MB; diffing it is expensive and meaningless.
+*.gz     binary
+*.pkl    binary
+*.docx   binary
+*.xlsx   binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+
+# --- Notebooks --------------------------------------------------------------
+# JSON text. Embedded outputs make diffs very noisy, so collapse them in pull
+# request views. Line endings are left to the `text=auto` rule above so that
+# existing checkouts are not rewritten.
+*.ipynb  linguist-documentation
+
+# --- GitHub language detection ---------------------------------------------
+# Without this the repository is reported as ~99% Jupyter Notebook, which hides
+# the Streamlit application that is the actual deliverable.
+*.ipynb  linguist-detectable=false

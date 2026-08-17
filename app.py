@@ -1,8 +1,9 @@
-import streamlit as st 
+import streamlit as st
 from PIL import Image
+import os
 import pickle
 import gzip
-import pandas as pd 
+import pandas as pd
 import textwrap
 import requests
 from requests.exceptions import ConnectionError
@@ -152,10 +153,36 @@ def make_request_with_retry(url, max_retries=10):
 
 
 
-# Poster fetching function 
+# TMDB credentials
+
+# The key is never committed. Locally it comes from .streamlit/secrets.toml
+# (gitignored) or a TMDB_API_KEY environment variable; on Streamlit Cloud it
+# comes from the app's Settings -> Secrets panel.
+
+def load_tmdb_api_key():
+
+    try:
+        key = st.secrets['TMDB_API_KEY']
+    except Exception:
+        key = os.environ.get('TMDB_API_KEY', '')
+
+    if not key:
+        st.error(
+            'TMDB_API_KEY is not configured. Add it to .streamlit/secrets.toml '
+            'or set it as an environment variable, then reload the app.'
+        )
+        st.stop()
+
+    return key
+
+
+TMDB_API_KEY = load_tmdb_api_key()
+
+
+# Poster fetching function
 
 def posterfetcher(web_movie_id):
-    url = 'https://api.themoviedb.org/3/movie/{}?api_key=93f1d3e22214eea1b2c32aa321328152'.format(web_movie_id)
+    url = 'https://api.themoviedb.org/3/movie/{}?api_key={}'.format(web_movie_id, TMDB_API_KEY)
     response = make_request_with_retry(url)
 
     data = response.json()

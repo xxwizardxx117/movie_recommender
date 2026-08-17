@@ -1,4 +1,35 @@
-venv
+# Local working notes — never pushed to the remote
+docs/
+
+# Raw dataset & TMDB exports (downloaded locally, not versioned)
 Data/
+
+# Uncompressed pickle artifacts (the .gz versions are committed instead)
 similarity.pkl
 movie_list.pkl
+
+# Virtual environments (uv creates .venv/)
+venv
+venv/
+.venv/
+env/
+
+# NOTE: uv.lock is deliberately NOT ignored. This is an application, not a
+# library, so the lockfile is committed to keep every machine and the
+# Streamlit Cloud deployment on identical dependency versions.
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
