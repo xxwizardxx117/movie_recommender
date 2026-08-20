@@ -1,0 +1,35 @@
+# Streamlit chrome theme.
+#
+# This sets the BASE colours so Streamlit's own widgets do not fight the
+# retro-cinema design. The light/dark switch itself is driven at runtime from
+# app.py (the ?theme= query param -> injected CSS custom properties), because
+# config.toml is read once at startup and cannot be toggled by the user.
+#
+# The theme lives in the URL rather than in session state on purpose: the
+# toggle is a link, and a link is a full navigation, which starts a new
+# Streamlit session and wipes session state. The URL survives that, survives a
+# refresh, and travels in a shared link.
+#
+# Values here match the "evening show" (dark) palette in style.css. When the
+# user switches to matinee/light, style.css overrides these via CSS variables.
+
+[theme]
+base = "dark"
+primaryColor = "#E8A33D"
+backgroundColor = "#17140F"
+secondaryBackgroundColor = "#13100C"
+textColor = "#F2E4CE"
+font = "sans serif"
+
+[client]
+# Keep tracebacks visible. Expected failures never reach this setting: a TMDB
+# outage is handled in app.py, which degrades each poster to a placeholder card
+# and says so above the grid. This only governs UNexpected exceptions, and
+# hiding those makes a real bug render as a silently blank area - which is
+# exactly what happened with the Watch Later panel. Set to false only once the
+# app is stable.
+showErrorDetails = true
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

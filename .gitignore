@@ -14,9 +14,13 @@ venv/
 .venv/
 env/
 
-# NOTE: uv.lock is deliberately NOT ignored. This is an application, not a
-# library, so the lockfile is committed to keep every machine and the
-# Streamlit Cloud deployment on identical dependency versions.
+# NOTE:
+# uv.lock is deliberately IGNORED. Streamlit Cloud ranks it ABOVE requirements.txt,
+# so committing it switches the installer to `uv sync` from pyproject.toml
+# which installs the dev group (jupyter, scikit-learn, nltk) into production.
+# requirements.txt is generated from the lock with --no-dev,
+# so the pins are already identical; the lockfile adds nothing but risk.
+uv.lock
 
 # Python
 __pycache__/

@@ -1,0 +1,44 @@
+[project]
+name = "movie-recommender"
+version = "1.0.0"
+description = "Content-based movie recommender built on the TMDB 5000 dataset, served with Streamlit."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Sujal Sharma" }]
+keywords = ["streamlit", "recommender-system", "tmdb", "cosine-similarity"]
+
+# Runtime dependencies — every third-party module imported by app.py.
+# pandas and pillow were previously undeclared and resolved only as
+# transitive Streamlit dependencies (issue DEP-01).
+dependencies = [
+    # st.context.url, used to build share links, landed in 1.45.
+    "streamlit>=1.45",
+    "requests>=2.31",
+    "pandas>=2.2",
+    "pillow>=10.0",
+    # QR codes for the Watch Later share link. Pure Python, no dependencies
+    # and no native build step, which matters on Community Cloud.
+    "segno>=1.6",
+]
+
+[project.urls]
+Homepage = "https://whatowatchnext.streamlit.app/"
+Repository = "https://github.com/xxwizardxx117/movie_recommender"
+
+# Offline-only dependencies. These are needed to re-run
+# Movie_Recommender.ipynb and regenerate the .pkl.gz artifacts, but are
+# never imported by the deployed app — so they stay out of requirements.txt.
+[dependency-groups]
+dev = [
+    "scikit-learn>=1.5",
+    "nltk>=3.9",
+    "numpy>=1.26",
+    "jupyter>=1.1",
+]
+
+[tool.uv]
+# This is an application, not an installable library: uv manages the
+# environment but does not build or install the project itself.
+package = false

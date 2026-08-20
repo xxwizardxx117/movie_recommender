@@ -1,63 +1,960 @@
-/*.d-inline-block {
-    align-items: center;
-    margin: 10px;
-}*/
+/* ============================================================================
+   What to Watch Next - retro cinema stylesheet
+   ============================================================================
 
+   STRUCTURE ONLY. Every colour here is a var(--wtw-*) custom property; the
+   actual palette is injected at runtime by app.py so the light/dark toggle can
+   swap it without a page reload.
 
+   SELECTOR POLICY - please keep to it:
+     USE      [data-testid="..."] and [data-baseweb="..."]  (stable API)
+     NEVER    .st-emotion-cache-*  (regenerated on every Streamlit release)
 
-/* navbar containers below  */
+   The previous version of this file targeted .st-emotion-cache-9ycgxx and
+   friends, which is why the sidebar styling silently broke on upgrade. That is
+   issue CSS-01 in docs/Problems and Issues.md.
+   ========================================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap');
 
-/*.navbar {
-    margin-top: 40px;
-    margin-bottom: 40px;
-   
-    position: fixed;
-    top: 0;
-    width: 100%;
+/* ---------- app shell ---------------------------------------------------- */
+
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"] {
+    background: var(--wtw-bg);
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+}
+
+[data-testid="stHeader"] {
+    background: transparent;
+}
+
+/* Streamlit caps this container and adds heavy padding (80px sides, 160px
+   bottom by default). With layout="wide" we want the poster grid to use the
+   whole window, so the cap is removed and the gutters are trimmed. Do not
+   reintroduce a max-width here - it leaves dead margin on wide monitors. */
+[data-testid="stMainBlockContainer"] {
+    max-width: 100%;
+    padding: 1rem 2.5rem 3rem 2.5rem;
+}
+
+/* ---------- tablet: stack the page split ---------------------------------- */
+
+/* Streamlit does not collapse columns until roughly 640px, but a 4:1 split is
+   unusable long before that - measured at 768px the Watch Later panel was
+   about 40px wide, the grid still tried to fit two cards inside it, and titles
+   wrapped to one letter per line. Stack the two columns from 1024px down. */
+@media (max-width: 1024px) {
+    .st-key-page_split > div > [data-testid="stHorizontalBlock"] {
+        flex-direction: column;
+    }
+
+    .st-key-page_split > div > [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+
+    /* Once stacked, the panel is full width, so the rail no longer needs to
+       fill the viewport - it would just push the page very long. */
+    .wtw-empty {
+        min-height: 30vh;
+    }
+
+    /* The main results grid gets cramped at five across on a tablet. */
+    [data-testid="stMain"] .wtw-name {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 640px) {
+    [data-testid="stMainBlockContainer"] {
+        padding: 1.25rem 1rem 2rem 1rem;
+    }
+
+    /* Below ~640px there is not enough width for the brand and the link row
+       to share a line. Stack them and let the title wrap rather than letting
+       it overflow the viewport. */
+    .wtw-masthead {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.9rem;
+        padding-bottom: 1rem;
+        margin-bottom: 1.2rem;
+    }
+
+    .wtw-brand {
+        gap: 0.75rem;
+    }
+
+    .wtw-title {
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.05;
+    }
+
+    .wtw-links {
+        gap: 8px;
+    }
+
+    /* The Watch Later rail sits below the results once Streamlit stacks the
+       columns, so a viewport-height rail would push the page absurdly long. */
+    .wtw-empty {
+        min-height: 40vh;
+    }
+}
+
+/* ---------- masthead ------------------------------------------------------ */
+
+.wtw-masthead {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    padding: 0%;
-  }*/
+    gap: 1rem;
+    padding: 0.3rem 0 1.4rem 0;
+    border-bottom: 3px solid var(--wtw-rule);
+    margin-bottom: 1.8rem;
+    flex-wrap: wrap;
+}
 
-/* .navbar-brand{
-    margin-top: 15px;
-    margin-left: 16px;
-    padding:0%;
-} */
+.wtw-brand {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+}
 
-/* .brandimage {
-    margin-left: 5px;
-    margin-right: 5px;
-
-} */
-
-.text123 {
-    display: center;
-    font-size: 30px;
+.wtw-mark {
+    width: clamp(42px, 3.7vw, 78px);
+    height: clamp(42px, 3.7vw, 78px);
+    flex: none;
+    border: 2px solid var(--wtw-accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    margin-left: 10px;
+    color: var(--wtw-accent);
+    font-size: 15px;
+    line-height: 1;
 }
 
-/* side bar button customization below  */
-
-.st-emotion-cache-9ycgxx {
-    align-self: center;
+.wtw-title {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    /* Fluid: shrinks on phones, grows on ultrawide. The old fixed 3.4rem
+       overflowed a 375px viewport and stayed small past 1400px. */
+    font-size: clamp(1.75rem, 2.9vw, 4.2rem);
+    letter-spacing: clamp(2px, 0.28vw, 5px);
+    color: var(--wtw-text);
+    line-height: 1;
+    margin: 0;
 }
-/* drag and drop statement */
 
-div.st-emotion-cache-1v7f65g .e1b2p2ww15 {
-    align-items: normal;
-
+.wtw-kicker {
+    font-size: clamp(0.7rem, 0.72vw, 1.15rem);
+    letter-spacing: clamp(1.8px, 0.22vw, 3.8px);
+    color: var(--wtw-accent);
+    margin-top: 7px;
 }
-/*button stretch*/
 
-div.st-emotion-cache-1v7f65g .e1b2p2ww14 {
-    margin: auto;
-    margin-bottom: 1rem;
-} 
-/*box padding change */
+.wtw-links {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.wtw-links a {
+    width: clamp(34px, 2.6vw, 52px);
+    height: clamp(34px, 2.6vw, 52px);
+    border: 1px solid var(--wtw-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wtw-muted);
+    text-decoration: none;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.wtw-links a:hover {
+    border-color: var(--wtw-accent);
+    color: var(--wtw-accent);
+}
+
+.wtw-links svg {
+    width: clamp(16px, 1.25vw, 26px);
+    height: clamp(16px, 1.25vw, 26px);
+    fill: currentColor;
+}
+
+/* The inline icon paths carry no fill attribute, so without this they fall
+   back to SVG's default black and vanish against the dark background. */
+.wtw-mark svg {
+    width: clamp(17px, 1.5vw, 32px);
+    height: clamp(17px, 1.5vw, 32px);
+    fill: currentColor;
+}
+
+.wtw-empty svg {
+    width: 20px;
+    height: 20px;
+    color: var(--wtw-placeholder);
+}
+
+/* The theme toggle is a link inside .wtw-links so it shares the icons' flex
+   row and can never drift out of alignment with them. Accent-coloured so it
+   reads as a control rather than a fourth social link. */
+.wtw-links a.wtw-toggle {
+    border-color: var(--wtw-accent);
+    color: var(--wtw-accent);
+}
+
+.wtw-links a.wtw-toggle:hover {
+    background: var(--wtw-accent);
+    color: var(--wtw-on-accent);
+}
+
+.wtw-links a.wtw-toggle svg {
+    fill: none;
+    stroke: currentColor;
+}
+
+/* ---------- section labels ------------------------------------------------ */
+
+.wtw-label {
+    font-size: 0.84rem;
+    letter-spacing: 2.8px;
+    color: var(--wtw-muted);
+    margin-bottom: 0.6rem;
+}
+
+.wtw-rule {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1.8rem 0 1.1rem 0;
+}
+
+.wtw-rule::before,
+.wtw-rule::after {
+    content: "";
+    height: 1px;
+    background: var(--wtw-border);
+    flex: 1;
+}
+
+.wtw-rule span {
+    font-size: 0.8rem;
+    letter-spacing: 2.8px;
+    color: var(--wtw-muted);
+    white-space: nowrap;
+}
+
+/* ---------- poster cards -------------------------------------------------- */
+
+.wtw-poster img,
+[data-testid="stImage"] img {
+    border-radius: 4px;
+    border: 1px solid var(--wtw-border);
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+.wtw-caption {
+    margin-top: 8px;
+}
+
+.wtw-name {
+    font-size: 1rem;
+    color: var(--wtw-text);
+    line-height: 1.4;
+}
+
+.wtw-year {
+    font-size: 0.88rem;
+    color: var(--wtw-muted);
+    margin-top: 2px;
+}
+
+/* ---------- watch later panel --------------------------------------------- */
+
+.wtw-panel-title {
+    font-family: 'Bebas Neue', Impact, sans-serif;
+    font-size: clamp(1.15rem, 1.35vw, 1.9rem);
+    letter-spacing: clamp(1.6px, 0.2vw, 3px);
+    color: var(--wtw-text);
+    line-height: 1;
+}
+
+.wtw-panel-underline {
+    height: 2px;
+    width: 30px;
+    background: var(--wtw-rule);
+    margin: 7px 0 14px 0;
+}
+
+/* ---------- share button + QR popover ------------------------------------- */
+
+/* The title and the share button share a Streamlit column row. Streamlit
+   gives every block a bottom margin; left alone it pushes the underline away
+   from the title and breaks the tight title/rule pairing. */
+.st-key-panel_head [data-testid="stHorizontalBlock"] {
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.st-key-panel_head [data-testid="stElementContainer"] {
+    margin-bottom: 0 !important;
+}
+
+/* Circular icon button, matching the masthead social links so the two rows
+   read as the same family. Streamlit buttons are fit-content by default,
+   which produced an oval - width and height are both pinned. */
+.st-key-share_pop [data-testid="stPopoverButton"] {
+    width: clamp(30px, 2.1vw, 42px) !important;
+    height: clamp(30px, 2.1vw, 42px) !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    border: 1px solid var(--wtw-border) !important;
+    background: transparent !important;
+    color: var(--wtw-muted) !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.st-key-share_pop [data-testid="stPopoverButton"]:hover {
+    border-color: var(--wtw-accent) !important;
+    color: var(--wtw-accent) !important;
+}
+
+/* The Material icon ships as a font glyph; without this it inherits the
+   button's default type scale and sits noticeably off-centre. */
+.st-key-share_pop [data-testid="stPopoverButton"] span {
+    font-size: clamp(15px, 1.05vw, 21px) !important;
+    line-height: 1 !important;
+}
+
+/* Streamlit appends a second "expand_more" chevron to every popover button.
+   In a normal wide button that reads fine, but here it hangs off the right
+   edge of the circle and breaks the shape - VERIFIED in the browser, the
+   button measures 42x42 with the chevron spilling outside it.
+   The chevron lives in an aria-hidden wrapper (it is decorative), which is
+   the stable hook; the emotion class on it is not usable per the policy at
+   the top of this file. */
+.st-key-share_pop [data-testid="stPopoverButton"] div[aria-hidden="true"] {
+    display: none !important;
+}
+
+/* stPopoverBody is a portal rendered near <body>, so it is NOT reachable from
+   .st-key-share_pop and has to be styled globally. This is the only popover
+   in the app, so that is safe. Verified against the Streamlit 1.61 bundle:
+   data-testid="stPopoverBody" is real, unlike data-baseweb="popover" which
+   never matched (see the listbox note further down). */
+[data-testid="stPopoverBody"] {
+    background: var(--wtw-panel) !important;
+    border: 1px solid var(--wtw-border) !important;
+    border-radius: 6px;
+    padding: 1rem !important;
+    width: 268px !important;
+}
+
+.wtw-share-head {
+    font-size: 0.72rem;
+    letter-spacing: 2.4px;
+    color: var(--wtw-muted);
+    text-align: center;
+    margin-bottom: 0.7rem;
+}
+
+/* The QR is intentionally NOT themed - it is always dark-on-light, because an
+   inverted symbol defeats most scanners (see share_qr_svg in app.py). This
+   background is therefore hard-coded to match the QR's own light modules
+   rather than tracking var(--wtw-bg): if the padding were a different shade
+   from the quiet zone, the symbol would sit in a visible frame and the
+   scanner's margin would effectively shrink to the padding width. */
+.wtw-qr {
+    background: #F6EFE2;
+    border: 1px solid var(--wtw-border);
+    border-radius: 4px;
+    padding: 8px;
+    line-height: 0;
+}
+
+.wtw-qr svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Keeps module edges hard when the SVG is scaled to a non-integer size.
+       Anti-aliased module edges are a common cause of a QR that will not lock
+       on at a shallow angle. */
+    shape-rendering: crispEdges;
+}
+
+.wtw-share-note {
+    font-size: 0.68rem;
+    letter-spacing: 1.6px;
+    color: var(--wtw-muted);
+    text-align: center;
+    margin-top: 0.45rem;
+}
+
+/* The share URL is a long unbroken token, so it must be allowed to wrap
+   mid-string or it overflows the popover.
+   The background has to go on the <pre>, not on the stCode wrapper: Streamlit
+   paints its code blocks on the pre itself, so a rule on the wrapper alone is
+   invisible - measured rgb(26,28,36), its default slate blue, sitting inside
+   an otherwise correctly themed popover. */
+[data-testid="stPopoverBody"] [data-testid="stCode"] pre {
+    background: var(--wtw-input) !important;
+    border: 1px solid var(--wtw-border);
+    border-radius: 4px;
+    padding: 8px !important;
+}
+
+[data-testid="stPopoverBody"] code {
+    font-size: 0.68rem !important;
+    color: var(--wtw-muted) !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+}
+
+/* The empty state fills the column so the panel reads as a sidebar rail
+   rather than a small box floating at the top of a lot of nothing. */
+.wtw-empty {
+    border: 1px dashed var(--wtw-border);
+    border-radius: 4px;
+    background: var(--wtw-panel);
+    padding: 1.4rem 0.7rem;
+    text-align: center;
+    color: var(--wtw-muted);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    min-height: calc(100vh - 16rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* The saved list is a fixed-height st.container, which Streamlit renders as a
+   scrollable block wrapper. Give it the rail's surface so it reads as one
+   panel rather than a floating scroll box. */
+/* The saved list is keyed, so Streamlit gives it a stable .st-key-* class.
+   Height is set here rather than in Python because st.container only accepts
+   pixels - and a fixed pixel height left dead space under the panel on tall
+   windows. calc() keeps it running down to just above the footer. */
+/* The keyed element is a flex ITEM, so setting height on it alone does
+   nothing - the parent's fixed pixel height (from st.container(height=...))
+   still wins. Both have to be sized, hence the :has() on the direct parent.
+   Verified in the DOM: the rule was present and ignored until the parent was
+   included. */
+/* SPECIFICITY MATTERS HERE - do not simplify these selectors.
+   Streamlit's generated .st-emotion-cache-* class also sets height, has the
+   same (0,1,0) specificity as a bare .st-key-saved_scroll, and is injected
+   AFTER this stylesheet - so it wins on source order and !important does not
+   help. Measured proof: max-height (uncontested) applied while height did not.
+   Chaining the class with its tag and sibling class raises specificity above
+   the emotion rule so the calc actually takes. */
+/* The rail's immediate parent is a stLayoutWrapper with flex-grow: 0, so it
+   stayed at its own content height (936px) while the column around it was
+   1550px - leaving 507px of dead space under the panel whenever ten results
+   pushed the page past the viewport. Letting that wrapper grow, then filling
+   it, makes the rail track the results column instead of the viewport.
+
+   min-height on the WRAPPER keeps the panel viewport-tall when results are
+   short or absent. max() floors it: on a 254px-tall window the bare calc
+   resolved to -82px, clamped to 0, and collapsed the rail to a 24px sliver. */
+div[class]:has(> div.stVerticalBlock.st-key-saved_scroll) {
+    flex: 1 1 auto !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: max(300px, calc(100vh - 21rem)) !important;
+}
+
+div.stVerticalBlock.st-key-saved_scroll {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+/* Border in --wtw-rule, the same oxblood as the masthead line. That variable
+   is deliberately identical in both palettes, so this needs no theme handling
+   and can never drift out of sync with the navbar. */
+.st-key-saved_scroll {
+    /* 3px matches .wtw-masthead's border-bottom exactly. */
+    border: 3px solid var(--wtw-rule);
+    border-radius: 4px;
+    padding: 0.9rem 0.8rem 0.2rem 0.8rem;
+    background: var(--wtw-panel);
+}
+
+.st-key-saved_scroll {
+    scrollbar-width: thin;
+    /* --wtw-border is deliberately NOT used here: at #D6C7AE on the cream
+       panel the thumb was almost invisible. --wtw-muted has real contrast in
+       both themes. */
+    scrollbar-color: var(--wtw-muted) transparent;
+}
+
+.st-key-saved_scroll::-webkit-scrollbar {
+    width: 10px;
+}
+
+.st-key-saved_scroll::-webkit-scrollbar-thumb {
+    background: var(--wtw-muted);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.st-key-saved_scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--wtw-accent);
+    background-clip: content-box;
+}
+
+.st-key-saved_scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ---------- watch later view switch --------------------------------------- */
+
+.wtw-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.wtw-panel-head .wtw-label {
+    margin-bottom: 0;
+}
+
+/* Sized up from 0.84rem to sit level with the 32px view buttons beside it -
+   at the smaller size the row read as a caption above the controls rather
+   than a heading alongside them. */
+/* The theme toggle now lives in its own column beside the masthead, so the
+   masthead's own bottom border would stop short of it. Move the rule to the
+   row and drop it from the inner block. */
+.wtw-label-inline {
+    margin-bottom: 0;
+    white-space: nowrap;
+    font-size: 1rem;
+    letter-spacing: 2.4px;
+    color: var(--wtw-text);
+}
+
+/* The view switch is two small Streamlit buttons. Active state comes from
+   type="primary" (amber fill), inactive from type="secondary" (outline), so
+   no extra class juggling is needed. */
+[class*="st-key-view_"] button {
+    min-height: 32px !important;
+    height: 32px;
+    padding: 0 !important;
+    font-size: 0.95rem !important;
+    line-height: 1;
+    border-radius: 4px;
+}
+
+/* ---------- watch later list tiles ---------------------------------------- */
+
+/* CARD SCOPING - the two views must be targeted separately.
+   Both produce a stHorizontalBlock, but it means different things:
+     list view -> the block is ONE film (thumb | meta | remove)
+     grid view -> the block is a ROW OF TWO films
+   Styling stHorizontalBlock blindly therefore drew a single shared card around
+   both grid films. Each view is wrapped in its own keyed container so the card
+   can be applied to the right element in each case. */
+
+/* List: one card per row. */
+.st-key-saved_list [data-testid="stHorizontalBlock"] {
+    background: var(--wtw-card);
+    border: 1px solid var(--wtw-border);
+    border-left: 3px solid var(--wtw-rule);
+    border-radius: 4px;
+    padding: 0.6rem 0.7rem;
+    margin-bottom: 0.6rem;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.st-key-saved_list [data-testid="stHorizontalBlock"]:hover {
+    border-color: var(--wtw-accent);
+    border-left-color: var(--wtw-accent);
+}
+
+/* Grid: one card per COLUMN, so the two films in a row stay separate. */
+.st-key-saved_grid [data-testid="stColumn"] {
+    background: var(--wtw-card);
+    border: 1px solid var(--wtw-border);
+    border-top: 3px solid var(--wtw-rule);
+    border-radius: 4px;
+    padding: 0.55rem 0.55rem 0.1rem 0.55rem;
+    margin-bottom: 0.6rem;
+    transition: border-color 0.15s ease;
+}
+
+.st-key-saved_grid [data-testid="stColumn"]:hover {
+    border-color: var(--wtw-accent);
+    border-top-color: var(--wtw-accent);
+}
+
+/* An odd number of saved films leaves the last row half empty. Streamlit
+   always creates every column you ask for, so that empty slot exists in the
+   DOM and was picking up the card styling above - rendering as a 466px tall
+   bordered box with nothing in it. Collapse any column that has no poster. */
+.st-key-saved_grid [data-testid="stColumn"]:not(:has([data-testid="stImage"])) {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+}
+
+.wtw-tile-name {
+    font-size: 0.95rem;
+    color: var(--wtw-text);
+    line-height: 1.35;
+}
+
+.wtw-tile-year {
+    font-size: 0.82rem;
+    color: var(--wtw-muted);
+    margin-top: 2px;
+}
+
+/* The remove control is keyed with a del_ prefix specifically so it can be
+   styled as a small square icon button, distinct from the full-width Remove
+   button used by the grid cards. */
+[class*="st-key-del_"] button {
+    min-height: 34px !important;
+    height: 34px;
+    width: 34px;
+    min-width: 34px;
+    padding: 0 !important;
+    font-size: 0.95rem !important;
+    line-height: 1;
+    background: transparent !important;
+    color: var(--wtw-muted) !important;
+    border: 1px solid var(--wtw-border) !important;
+    border-radius: 4px;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+[class*="st-key-del_"] button:hover {
+    border-color: var(--wtw-rule) !important;
+    color: var(--wtw-on-accent) !important;
+    background: var(--wtw-rule) !important;
+}
+
+/* List thumbnails are small, so drop the heavy border the big posters use. */
+.st-key-saved_scroll [data-testid="stHorizontalBlock"] [data-testid="stImage"] img {
+    border-radius: 3px;
+    border: 1px solid var(--wtw-border);
+}
+
+/* Streamlit overlays a "Fullscreen" toolbar on every image. On a 90px
+   thumbnail it covers most of the poster on hover and adds nothing, so it is
+   suppressed inside the panel only - the main results grid keeps it. */
+.st-key-saved_scroll [data-testid="stElementToolbar"] {
+    display: none !important;
+}
+
+/* Grid cards carry less text, so the type steps down to keep two per row
+   legible in a narrow panel. */
+.wtw-compact .wtw-name {
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.wtw-compact .wtw-year {
+    font-size: 0.76rem;
+}
+
+/* Pinned under the scroll region so it never scrolls out of view. */
+.wtw-hint-pinned {
+    border-top: 1px solid var(--wtw-border);
+    padding-top: 0.7rem;
+    margin-top: 0.4rem;
+}
+
+.wtw-hint {
+    font-size: 0.88rem;
+    color: var(--wtw-placeholder);
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+/* Inside the empty rail the hint is centred with the rest of the content and
+   kept narrow so it does not run edge to edge in a slim column. */
+.wtw-empty .wtw-hint {
+    margin-top: 4px;
+    max-width: 22ch;
+    text-align: center;
+}
+
+/* Transient status line above the results grid - currently only "TMDB isn't
+   responding" (issue UX-16). Deliberately NOT st.info: Streamlit's own alert
+   chrome brings its own blue palette and icon, which reads as a different
+   product bolted into the page. This is the same card and border as everything
+   else, with the oxblood rule carrying the "something is off" signal - the one
+   colour that holds in both themes. */
+.wtw-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--wtw-card);
+    border: 1px solid var(--wtw-border);
+    border-left: 3px solid var(--wtw-rule);
+    border-radius: 2px;
+    padding: 0.7rem 0.9rem;
+    margin: 0 0 1.2rem 0;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--wtw-muted);
+}
+
+/* The idle hint sits directly under "PICK A FILM TO BEGIN", so it is centred
+   on the same axis rather than hugging the left edge of a very wide column. */
+.wtw-hint-centred {
+    text-align: center;
+    max-width: 52ch;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ---------- transitions --------------------------------------------------- */
+
+/* Results fade up as they arrive, so the switch from spinner to grid reads as
+   a transition rather than a hard swap. `both` keeps the start state applied
+   during the delay, preventing a flash of the final position first. */
+@keyframes wtw-rise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.wtw-rule,
+.wtw-hint-centred {
+    animation: wtw-rise 0.35s ease both;
+}
+
+[data-testid="stMain"] [data-testid="stImage"] img {
+    animation: wtw-rise 0.4s ease both;
+}
+
+/* Respect users who have asked for reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+    .wtw-rule,
+    .wtw-hint-centred,
+    [data-testid="stMain"] [data-testid="stImage"] img {
+        animation: none;
+    }
+}
+
+/* ---------- streamlit widgets --------------------------------------------- */
+
+/* The select is a BaseWeb widget with several nested divs that each carry
+   their own background from Streamlit's base theme. config.toml pins that base
+   to dark, so in matinee mode the inner layers must be overridden too - not
+   just the outer control, or the box stays black on cream. */
+
+/* Streamlit paints the select wrapper with secondaryBackgroundColor from
+   config.toml, on a div that carries no data-testid or data-baseweb hook - so
+   it has to be reached structurally. Verified in the DOM: it sits two levels
+   inside [data-testid="stSelectbox"]. Without this the box stays #13100C in
+   matinee mode, i.e. a black bar on a cream page. */
+[data-testid="stSelectbox"] > div > div {
+    background: var(--wtw-input) !important;
+    border-color: var(--wtw-border) !important;
+    border-radius: 4px;
+    min-height: 54px;
+    font-size: 1.1rem;
+}
+
+[data-testid="stSelectbox"] > div > div:hover {
+    border-color: var(--wtw-accent) !important;
+}
+
+/* VERIFIED IN THE DOM: this Streamlit build does NOT put data-baseweb="select"
+   anywhere in the selectbox subtree, so rules written against it never matched.
+   The typed text sits on a plain <input> that inherits textColor from
+   config.toml - which is the DARK cream, hence near-invisible on a cream page
+   in matinee mode. Target it through the stSelectbox testid instead. */
+[data-testid="stSelectbox"] input,
+[data-testid="stSelectbox"] div,
+[data-testid="stSelectbox"] span {
+    color: var(--wtw-text) !important;
+    -webkit-text-fill-color: var(--wtw-text) !important;
+}
+
+[data-testid="stSelectbox"] input::placeholder {
+    color: var(--wtw-placeholder) !important;
+    -webkit-text-fill-color: var(--wtw-placeholder) !important;
+}
+
+[data-testid="stSelectbox"] svg {
+    fill: var(--wtw-muted);
+}
+
+/* Tooltips are rendered in a portal at the end of <body>, outside every
+   container, so nothing scopes them - they take backgroundColor and textColor
+   straight from config.toml's dark base and stay black-on-cream in matinee
+   mode. Measured before the fix: bg rgb(19,16,12), text rgb(242,228,206).
+   Covers the view switch, the remove buttons and any future help= tooltip. */
+[data-testid="stTooltipContent"],
+[role="tooltip"] [data-testid="stTooltipContent"] {
+    background: var(--wtw-input) !important;
+    color: var(--wtw-text) !important;
+    border: 1px solid var(--wtw-border);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+[data-testid="stTooltipContent"] p,
+[data-testid="stTooltipContent"] div {
+    color: var(--wtw-text) !important;
+}
+
+/* The dropdown list renders in a portal outside the widget, so it needs its
+   own rules or it inherits Streamlit's dark base. */
+/* The suggestion dropdown is a portal rendered near <body>, with no
+   data-testid or data-baseweb hook anywhere on it - VERIFIED by walking the
+   DOM: listbox -> div.st-emotion-cache-* (the dark panel, measured
+   rgb(23,20,15) in light mode) -> div -> body. The only stable way to reach it
+   is the element that directly contains the listbox. Rules written against
+   data-baseweb="popover" never matched in this Streamlit build. */
+div:has(> [role="listbox"]) {
+    background: var(--wtw-input) !important;
+    border: 1px solid var(--wtw-border) !important;
+    border-radius: 4px;
+}
+
+[role="listbox"],
+[role="listbox"] * {
+    color: var(--wtw-text) !important;
+    background-color: transparent !important;
+    font-size: 1.02rem;
+}
+
+[role="listbox"] > div > div:hover,
+[role="listbox"] [role="option"]:hover,
+[role="listbox"] li:hover {
+    background-color: var(--wtw-card) !important;
+    color: var(--wtw-accent) !important;
+}
+
+/* Streamlit paints its own background on the app shell and block containers
+   from the config.toml base theme. Force them onto the active palette so the
+   matinee/evening switch actually takes effect everywhere. */
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stBottomBlockContainer"] {
+    background: var(--wtw-bg) !important;
+}
+
+[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p {
+    color: var(--wtw-text);
+}
+
+/* Primary = Recommend. Filled amber, the one loud control on the page. */
+[data-testid="stBaseButton-primary"] {
+    background: var(--wtw-accent);
+    color: var(--wtw-on-accent);
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    min-height: 54px;
+    font-size: 1rem;
+    transition: filter 0.15s ease;
+}
+
+[data-testid="stBaseButton-primary"]:hover {
+    filter: brightness(1.08);
+    background: var(--wtw-accent);
+    color: var(--wtw-on-accent);
+    border: none;
+}
+
+/* Secondary = the theme toggle. Outlined, so it does not compete. */
+[data-testid="stBaseButton-secondary"] {
+    background: transparent;
+    color: var(--wtw-muted);
+    border: 1px solid var(--wtw-border);
+    border-radius: 4px;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    min-height: 44px;
+}
+
+[data-testid="stBaseButton-secondary"]:hover {
+    background: transparent;
+    border-color: var(--wtw-accent);
+    color: var(--wtw-accent);
+}
+
+/* "Saved" state on a poster whose film is already on the list */
+[data-testid="stBaseButton-secondary"]:disabled,
+[data-testid="stBaseButton-secondary"][disabled] {
+    background: transparent;
+    border-color: var(--wtw-accent);
+    color: var(--wtw-accent);
+    opacity: 1;
+    cursor: default;
+}
+
+/* Save / remove controls sit tight under their poster caption */
+[data-testid="stBaseButton-secondary"] {
+    margin-top: 6px;
+    padding: 0.3rem 0.6rem;
+}
+
+.stButton > button:focus-visible {
+    outline: 2px solid var(--wtw-accent);
+    outline-offset: 2px;
+}
+
+[data-testid="stSpinner"] {
+    color: var(--wtw-muted);
+}
+
+/* Hide Streamlit's default footer and menu chrome; the masthead replaces them */
+[data-testid="stToolbar"] {
+    right: 1rem;
+}
 
 
+/* ---------- responsive rail height (MUST STAY LAST) ------------------------
+   These override the base rail height above. CSS resolves equal-specificity
+   !important rules by SOURCE ORDER, so if these are moved earlier in the file
+   the base calc() wins and the mobile heights silently do nothing - which is
+   exactly what happened before: the rail stayed on the desktop calc, went
+   negative on a short screen, and collapsed to 24px. Keep this block last. */
 
+@media (max-width: 1024px) {
+    div.stVerticalBlock.st-key-saved_scroll,
+    div[class]:has(> div.stVerticalBlock.st-key-saved_scroll) {
+        height: max(280px, 55vh) !important;
+        max-height: max(280px, 55vh) !important;
+        min-height: max(280px, 55vh) !important;
+    }
+}
 
+@media (max-width: 640px) {
+    div.stVerticalBlock.st-key-saved_scroll,
+    div[class]:has(> div.stVerticalBlock.st-key-saved_scroll) {
+        height: max(260px, 60vh) !important;
+        max-height: max(260px, 60vh) !important;
+        min-height: max(260px, 60vh) !important;
+    }
+}
